@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduManage Pro — Microservices Architecture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6f9;
+      color: #2d3748;
+      padding: 40px 20px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* Cover */
+    .cover {
+      background: linear-gradient(135deg, #1a365d, #2b6cb0);
+      color: white;
+      border-radius: 12px;
+      padding: 60px 50px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .cover h1 { font-size: 2.8rem; margin-bottom: 10px; }
+    .cover h2 { font-size: 1.4rem; font-weight: 300; opacity: 0.85; margin-bottom: 24px; }
+    .cover .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 0.85rem;
+      margin: 4px;
+    }
+    .cover .meta { margin-top: 30px; font-size: 0.9rem; opacity: 0.7; }
+
+    /* Sections */
+    .section {
+      background: white;
+      border-radius: 10px;
+      padding: 36px 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a365d;
+      border-left: 5px solid #2b6cb0;
+      padding-left: 14px;
+      margin-bottom: 24px;
+    }
+    .section-title span {
+      display: inline-block;
+      background: #ebf4ff;
+      color: #2b6cb0;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      line-height: 32px;
+      text-align: center;
+      font-size: 1rem;
+      margin-right: 10px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.93rem;
+    }
+    th {
+      background: #1a365d;
+      color: white;
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f7fafc; }
+    tr:hover td { background: #ebf4ff; }
+
+    /* Code blocks */
+    pre {
+      background: #1a202c;
+      color: #a8d8a8;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.84rem;
+      line-height: 1.7;
+      margin-top: 14px;
+    }
+    code { font-family: 'Courier New', monospace; }
+
+    /* Kafka topics */
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .topic-card {
+      background: #f0fff4;
+      border: 1px solid #9ae6b4;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .topic-card .topic-name {
+      font-weight: 700;
+      color: #276749;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    .topic-card .role {
+      font-size: 0.82rem;
+      margin: 3px 0;
+      color: #4a5568;
+    }
+    .topic-card .role strong { color: #276749; }
+
+    /* Phase cards */
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .phase-card {
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .phase-card:nth-child(1) { background: #ebf4ff; border-left: 4px solid #2b6cb0; }
+    .phase-card:nth-child(2) { background: #f0fff4; border-left: 4px solid #38a169; }
+    .phase-card:nth-child(3) { background: #fffff0; border-left: 4px solid #d69e2e; }
+    .phase-card:nth-child(4) { background: #fff5f5; border-left: 4px solid #e53e3e; }
+    .phase-card h4 { font-size: 1rem; margin-bottom: 10px; color: #1a202c; }
+    .phase-card ul { list-style: none; padding: 0; }
+    .phase-card ul li { font-size: 0.88rem; padding: 3px 0; color: #4a5568; }
+    .phase-card ul li::before { content: "→ "; color: #718096; }
+
+    /* Infra grid */
+    .infra-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .infra-card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .infra-card .icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .infra-card .name { font-weight: 700; font-size: 0.9rem; color: #1a365d; margin-bottom: 4px; }
+    .infra-card .desc { font-size: 0.8rem; color: #718096; }
+
+    /* Diagram */
+    .diagram {
+      background: #1a202c;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 28px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.9;
+    }
+    .diagram .layer-label {
+      color: #63b3ed;
+      font-weight: bold;
+    }
+    .diagram .service { color: #9ae6b4; }
+    .diagram .kafka { color: #f6ad55; }
+    .diagram .db { color: #fc8181; }
+    .diagram .infra { color: #b794f4; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #718096;
+      font-size: 0.85rem;
+      margin-top: 40px;
+      padding: 20px;
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .section { box-shadow: none; border: 1px solid #e2e8f0; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Cover -->
+  <div class="cover">
+    <h1>EduManage Pro</h1>
+    <h2>Microservices Architecture Design Document</h2>
+    <div>
+      <span class="badge">Java 17</span>
+      <span class="badge">Spring Boot</span>
+      <span class="badge">Spring Cloud</span>
+      <span class="badge">PostgreSQL</span>
+      <span class="badge">Redis</span>
+      <span class="badge">Apache Kafka</span>
+      <span class="badge">React + TypeScript</span>
+    </div>
+    <div class="meta">School Management System &nbsp;|&nbsp; Prepared: April 2026</div>
+  </div>
+
+  <!-- Section 1: Services -->
+  <div class="section">
+    <div class="section-title"><span>1</span>Microservices Catalogue</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Service</th>
+          <th>Responsibility</th>
+          <th>Port</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>api-gateway</strong></td><td>Routing, auth filter, rate limiting, SSL termination</td><td>8080</td></tr>
+        <tr><td>2</td><td><strong>auth-service</strong></td><td>JWT issuance, OAuth2, roles (ADMIN, TEACHER, STUDENT, PARENT)</td><td>8081</td></tr>
+        <tr><td>3</td><td><strong>user-service</strong></td><td>Profile management for all user types</td><td>8082</td></tr>
+        <tr><td>4</td><td><strong>student-service</strong></td><td>Enrollment, academic records, class assignments</td><td>8083</td></tr>
+        <tr><td>5</td><td><strong>course-service</strong></td><td>Curriculum, subjects, syllabus management</td><td>8084</td></tr>
+        <tr><td>6</td><td><strong>timetable-service</strong></td><td>Schedule generation, room/teacher conflict detection</td><td>8085</td></tr>
+        <tr><td>7</td><td><strong>attendance-service</strong></td><td>Daily attendance tracking, reports</td><td>8086</td></tr>
+        <tr><td>8</td><td><strong>grade-service</strong></td><td>Exam results, GPA calculation, transcripts</td><td>8087</td></tr>
+        <tr><td>9</td><td><strong>fee-service</strong></td><td>Fee structures, invoicing, payment processing</td><td>8088</td></tr>
+        <tr><td>10</td><td><strong>notification-service</strong></td><td>Email/SMS/push via Kafka consumer</td><td>8089</td></tr>
+        <tr><td>11</td><td><strong>report-service</strong></td><td>Aggregated reporting, PDF generation</td><td>8090</td></tr>
+        <tr><td>12</td><td><strong>config-server</strong></td><td>Centralized config (Spring Cloud Config, Git-backed)</td><td>8888</td></tr>
+        <tr><td>13</td><td><strong>discovery-server</strong></td><td>Service registry (Netflix Eureka)</td><td>8761</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 2: Communication -->
+  <div class="section">
+    <div class="section-title"><span>2</span>Communication Strategy</div>
+
+    <h3 style="color:#2b6cb0; margin-bottom:10px;">Synchronous — REST via Feign Client</h3>
+    <p style="color:#4a5568; margin-bottom:10px;">Used when an immediate response is required between services.</p>
+    <table>
+      <thead><tr><th>Caller</th><th>Callee</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>api-gateway</td><td>auth-service</td><td>Token validation on every request</td></tr>
+        <tr><td>api-gateway</td><td>user-service</td><td>Profile enrichment</td></tr>
+        <tr><td>student-service</td><td>course-service</td><td>Enrollment eligibility check</td></tr>
+        <tr><td>grade-service</td><td>student-service</td><td>Student lookup before grade assignment</td></tr>
+        <tr><td>fee-service</td><td>student-service</td><td>Student validation before invoice</td></tr>
+        <tr><td>timetable-service</td><td>course-service</td><td>Course detail fetch for scheduling</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#276749; margin: 24px 0 10px;">Asynchronous — Apache Kafka</h3>
+    <p style="color:#4a5568; margin-bottom:14px;">Used for decoupled, event-driven flows. Cluster: 3 brokers, replication factor 3, 6 partitions per topic.</p>
+    <div class="topic-grid">
+      <div class="topic-card">
+        <div class="topic-name">student.enrolled</div>
+        <div class="role"><strong>Producer:</strong> student-service</div>
+        <div class="role"><strong>Consumers:</strong> fee-service, notification-service, timetable-service</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-name">attendance.marked</div>
+        <div class="role"><strong>Producer:</strong> attendance-service</div>
+        <div class="role"><strong>Consumers:</strong> notification-service, report-service</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-name">grade.published</div>
+        <div class="role"><strong>Producer:</strong> grade-service</div>
+        <div class="role"><strong>Consumers:</strong> notification-service, report-service</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-name">fee.paid</div>
+        <div class="role"><strong>Producer:</strong> fee-service</div>
+        <div class="role"><strong>Consumers:</strong> notification-service, report-service</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-name">user.created</div>
+        <div class="role"><strong>Producer:</strong> auth-service</div>
+        <div class="role"><strong>Consumers:</strong> user-service, notification-service</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: API Gateway -->
+  <div class="section">
+    <div class="section-title"><span>3</span>API Gateway</div>
+    <p style="margin-bottom:14px; color:#4a5568;">Technology: <strong>Spring Cloud Gateway</strong> + Spring Security OAuth2 Resource Server</p>
+
+    <table>
+      <thead><tr><th>Route Path</th><th>Target Service</th><th>Required Roles</th></tr></thead>
+      <tbody>
+        <tr><td>/api/auth/**</td><td>auth-service</td><td>Public (no auth)</td></tr>
+        <tr><td>/api/students/**</td><td>student-service</td><td>ROLE_ADMIN, ROLE_TEACHER</td></tr>
+        <tr><td>/api/grades/**</td><td>grade-service</td><td>ROLE_TEACHER, ROLE_STUDENT</td></tr>
+        <tr><td>/api/fees/**</td><td>fee-service</td><td>ROLE_ADMIN, ROLE_PARENT</td></tr>
+        <tr><td>/api/timetable/**</td><td>timetable-service</td><td>Authenticated (any role)</td></tr>
+        <tr><td>/api/reports/**</td><td>report-service</td><td>ROLE_ADMIN, ROLE_TEACHER</td></tr>
+        <tr><td>/api/attendance/**</td><td>attendance-service</td><td>ROLE_TEACHER, ROLE_ADMIN</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:20px; margin-bottom:10px; color:#2b6cb0;">Gateway Filter Chain</h3>
+    <pre>AuthenticationFilter    → validates JWT, injects X-User-Id & X-User-Role headers
+RateLimitFilter         → Redis token bucket (per IP + per user)
+CircuitBreakerFilter    → Resilience4j per route
+RequestLoggingFilter    → X-Correlation-ID propagation across all services</pre>
+
+    <h3 style="margin-top:20px; margin-bottom:10px; color:#2b6cb0;">Redis Usage in Gateway</h3>
+    <table>
+      <thead><tr><th>Purpose</th><th>TTL</th></tr></thead>
+      <tbody>
+        <tr><td>Rate limiting counters</td><td>1 minute sliding window</td></tr>
+        <tr><td>JWT blacklist (logout / token revoke)</td><td>Token expiry duration</td></tr>
+        <tr><td>Downstream service response cache</td><td>30 seconds (public routes only)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 4: DB Strategy -->
+  <div class="section">
+    <div class="section-title"><span>4</span>Database Strategy</div>
+    <p style="margin-bottom:16px; color:#4a5568;">Pattern: <strong>Database-per-Service</strong> — each service owns its schema, no shared tables.</p>
+
+    <table>
+      <thead><tr><th>Service</th><th>Database</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>auth-service</td><td>PostgreSQL</td><td>Relational — users, roles, refresh tokens</td></tr>
+        <tr><td>user-service</td><td>PostgreSQL</td><td>Relational — profiles, addresses, contacts</td></tr>
+        <tr><td>student-service</td><td>PostgreSQL</td><td>Relational — enrollment, parent relations</td></tr>
+        <tr><td>course-service</td><td>PostgreSQL</td><td>Relational — curriculum, subject hierarchy</td></tr>
+        <tr><td>timetable-service</td><td>PostgreSQL</td><td>Relational — schedule constraints, rooms</td></tr>
+        <tr><td>attendance-service</td><td>PostgreSQL + Redis</td><td>PG for persistence; Redis caches today's live data</td></tr>
+        <tr><td>grade-service</td><td>PostgreSQL</td><td>Relational — exam records, GPA history</td></tr>
+        <tr><td>fee-service</td><td>PostgreSQL</td><td>ACID critical — financial transactions</td></tr>
+        <tr><td>notification-service</td><td>Redis</td><td>Ephemeral — queued/sent notification state</td></tr>
+        <tr><td>report-service</td><td>PostgreSQL (read replica)</td><td>Aggregation-heavy; separate from OLTP writes</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:24px; margin-bottom:12px; color:#2b6cb0;">Design Patterns Applied</h3>
+    <table>
+      <thead><tr><th>Pattern</th><th>Applied To</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Saga (Choreography)</td><td>student-service → fee-service → notification-service</td><td>Multi-service enrollment without distributed transactions</td></tr>
+        <tr><td>Outbox Pattern</td><td>fee-service, grade-service</td><td>Reliable Kafka event publishing — no dual-write risk</td></tr>
+        <tr><td>CQRS</td><td>report-service</td><td>Write via Kafka events; read from materialized views</td></tr>
+        <tr><td>Flyway Migrations</td><td>All services</td><td>Version-controlled schema evolution</td></tr>
+        <tr><td>HikariCP Pooling</td><td>All services</td><td>Tuned max-pool-size per service load profile</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 5: Architecture Diagram -->
+  <div class="section">
+    <div class="section-title"><span>5</span>Architecture Diagram</div>
+    <div class="diagram">
+<pre style="background:transparent; color:inherit; padding:0;">
+<span class="layer-label">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="layer-label">│                          CLIENTS                                 │</span>
+<span class="layer-label">│          React + TypeScript │ Mobile App │ Admin Portal           │</span>
+<span class="layer-label">└──────────────────────────────┬──────────────────────────────────┘</span>
+                               │ HTTPS / WSS
+<span class="layer-label">┌──────────────────────────────▼──────────────────────────────────┐</span>
+<span class="layer-label">│                        API GATEWAY :8080                         │</span>
+<span class="layer-label">│              Spring Cloud Gateway + OAuth2 Resource Server        │</span>
+<span class="layer-label">│   ┌─────────────────┐  ┌──────────────┐  ┌────────────────────┐ │</span>
+<span class="layer-label">│   │ AuthFilter+JWT  │  │ RateLimit    │  │ CircuitBreaker     │ │</span>
+<span class="layer-label">│   └─────────────────┘  └──────┬───────┘  └────────────────────┘ │</span>
+<span class="layer-label">│                          Redis Cache                              │</span>
+<span class="layer-label">└──────────────────────────────┬──────────────────────────────────┘</span>
+                               │ Feign / REST
+       ┌───────────────────────┼──────────────────────┐
+       │                       │                      │
+<span class="service">┌──────▼──────────┐  ┌────────▼────────┐  ┌─────────▼────────┐</span>
+<span class="service">│  auth-service   │  │  user-service   │  │ student-service  │</span>
+<span class="service">│  :8081          │  │  :8082          │  │ :8083            │</span>
+<span class="db">│  PostgreSQL     │  │  PostgreSQL     │  │ PostgreSQL       │</span>
+<span class="service">└─────────────────┘  └─────────────────┘  └────────┬─────────┘</span>
+                                                    │ Feign
+<span class="service">┌─────────────────┐  ┌──────────────────┐  ┌───────▼──────────┐  ┌────────────────┐</span>
+<span class="service">│ course-service  │  │timetable-service │  │  grade-service   │  │  fee-service   │</span>
+<span class="service">│ :8084           │  │ :8085            │  │  :8087           │  │  :8088         │</span>
+<span class="db">│ PostgreSQL      │  │ PostgreSQL       │  │  PostgreSQL      │  │  PostgreSQL    │</span>
+<span class="service">└────────┬────────┘  └────────┬─────────┘  └──────────────────┘  └────────────────┘</span>
+         │                   │
+<span class="service">┌────────▼────────────────────▼──────────────────────────────────┐</span>
+<span class="service">│                    attendance-service :8086                      │</span>
+<span class="db">│               PostgreSQL (persistence) + Redis (live cache)      │</span>
+<span class="service">└──────────────────────────┬─────────────────────────────────────┘</span>
+                           │
+         ┌─────────────────┴────────────────────────────────┐
+         │           All services publish events             │
+<span class="kafka">┌────────▼──────────────────────────────────────────────────────┐</span>
+<span class="kafka">│                    APACHE KAFKA CLUSTER                        │</span>
+<span class="kafka">│           3 Brokers │ Replication Factor 3 │ 6 Partitions      │</span>
+<span class="kafka">│                                                                │</span>
+<span class="kafka">│  ◆ student.enrolled  ◆ attendance.marked  ◆ grade.published   │</span>
+<span class="kafka">│  ◆ fee.paid          ◆ user.created                           │</span>
+<span class="kafka">└───────────────────────┬───────────────────┬────────────────────┘</span>
+                        │                   │
+          <span class="service">┌─────────────▼───────┐  ┌────────▼──────────────┐</span>
+          <span class="service">│ notification-service│  │   report-service      │</span>
+          <span class="service">│ :8089               │  │   :8090               │</span>
+          <span class="db">│ Redis               │  │   PostgreSQL          │</span>
+          <span class="service">└─────────────────────┘  │   (read replica)      │</span>
+                                   <span class="service">└───────────────────────┘</span>
+
+<span class="infra">┌───────────────────────────────────────────────────────────────┐</span>
+<span class="infra">│                    INFRASTRUCTURE PLANE                        │</span>
+<span class="infra">│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐ │</span>
+<span class="infra">│  │config-server │  │  Eureka      │  │  Zipkin (Tracing)    │ │</span>
+<span class="infra">│  │  :8888       │  │  :8761       │  │  Micrometer→Zipkin   │ │</span>
+<span class="infra">│  └──────────────┘  └──────────────┘  └──────────────────────┘ │</span>
+<span class="infra">│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐ │</span>
+<span class="infra">│  │  Prometheus  │  │   Grafana    │  │  ELK Stack           │ │</span>
+<span class="infra">│  │  (Metrics)   │  │  (Dashboard) │  │  (Centralized Logs)  │ │</span>
+<span class="infra">│  └──────────────┘  └──────────────┘  └──────────────────────┘ │</span>
+<span class="infra">└───────────────────────────────────────────────────────────────┘</span>
+</pre>
+    </div>
+  </div>
+
+  <!-- Section 6: Cross-Cutting -->
+  <div class="section">
+    <div class="section-title"><span>6</span>Cross-Cutting Concerns</div>
+    <table>
+      <thead><tr><th>Concern</th><th>Technology / Solution</th></tr></thead>
+      <tbody>
+        <tr><td>Distributed Tracing</td><td>Micrometer + Zipkin, X-Correlation-ID header propagation</td></tr>
+        <tr><td>Circuit Breaking</td><td>Resilience4j on all Feign clients</td></tr>
+        <tr><td>Config Management</td><td>Spring Cloud Config Server (Git-backed repository)</td></tr>
+        <tr><td>Service Discovery</td><td>Netflix Eureka with health checks</td></tr>
+        <tr><td>Centralized Logging</td><td>Logback → Logstash → Elasticsearch → Kibana</td></tr>
+        <tr><td>Metrics &amp; Alerting</td><td>Micrometer → Prometheus → Grafana dashboards</td></tr>
+        <tr><td>Secrets Management</td><td>HashiCorp Vault or environment-injected (never in config repo)</td></tr>
+        <tr><td>Containerization (Dev)</td><td>Docker + Docker Compose</td></tr>
+        <tr><td>Orchestration (Prod)</td><td>Kubernetes (K8s) with HPA auto-scaling</td></tr>
+        <tr><td>API Documentation</td><td>SpringDoc OpenAPI 3 / Swagger UI per service</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 7: Build Order -->
+  <div class="section">
+    <div class="section-title"><span>7</span>Suggested Build Order</div>
+    <p style="color:#4a5568; margin-bottom:16px;">Each phase delivers a deployable, runnable slice of the system.</p>
+    <div class="phase-grid">
+      <div class="phase-card">
+        <h4>Phase 1 — Foundation</h4>
+        <ul>
+          <li>config-server</li>
+          <li>discovery-server (Eureka)</li>
+          <li>api-gateway</li>
+          <li>auth-service</li>
+        </ul>
+      </div>
+      <div class="phase-card">
+        <h4>Phase 2 — Core Domain</h4>
+        <ul>
+          <li>user-service</li>
+          <li>student-service</li>
+          <li>course-service</li>
+        </ul>
+      </div>
+      <div class="phase-card">
+        <h4>Phase 3 — Academic Ops</h4>
+        <ul>
+          <li>timetable-service</li>
+          <li>attendance-service</li>
+          <li>grade-service</li>
+        </ul>
+      </div>
+      <div class="phase-card">
+        <h4>Phase 4 — Support Services</h4>
+        <ul>
+          <li>fee-service</li>
+          <li>notification-service</li>
+          <li>report-service</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infrastructure -->
+  <div class="section">
+    <div class="section-title"><span>8</span>Infrastructure Components</div>
+    <div class="infra-grid">
+      <div class="infra-card">
+        <div class="icon">🗄️</div>
+        <div class="name">PostgreSQL</div>
+        <div class="desc">Primary OLTP database per service</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">⚡</div>
+        <div class="name">Redis</div>
+        <div class="desc">Cache, rate limiting, JWT blacklist</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">📨</div>
+        <div class="name">Apache Kafka</div>
+        <div class="desc">Async event streaming, 3-broker cluster</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">🔍</div>
+        <div class="name">Eureka</div>
+        <div class="desc">Service discovery &amp; registry</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">⚙️</div>
+        <div class="name">Config Server</div>
+        <div class="desc">Git-backed centralized config</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">🔭</div>
+        <div class="name">Zipkin</div>
+        <div class="desc">Distributed request tracing</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">📊</div>
+        <div class="name">Prometheus + Grafana</div>
+        <div class="desc">Metrics collection &amp; dashboards</div>
+      </div>
+      <div class="infra-card">
+        <div class="icon">📋</div>
+        <div class="name">ELK Stack</div>
+        <div class="desc">Centralized structured logging</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    EduManage Pro — Microservices Architecture &nbsp;|&nbsp; Java 17 + Spring Boot + Spring Cloud
+    &nbsp;|&nbsp; Designed April 2026
+  </div>
+
+</div>
+</body>
+</html>

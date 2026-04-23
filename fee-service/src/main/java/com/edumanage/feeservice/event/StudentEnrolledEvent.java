@@ -1,0 +1,18 @@
+package com.edumanage.feeservice.event;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data @NoArgsConstructor @AllArgsConstructor
+public class StudentEnrolledEvent {
+    private UUID enrollmentId;
+    private UUID studentId;
+    private UUID courseId;
+    private UUID parentId;
+    private String studentCode;
+    private LocalDateTime enrolledAt;
+}
