@@ -1,0 +1,25 @@
+# Production profile — all values MUST be supplied via environment variables.
+# No defaults. Startup fails fast if any required variable is missing.
+spring:
+  jpa:
+    show-sql: false
+  flyway:
+    baseline-on-migrate: false   # Never auto-baseline in prod
+
+# Reduce trace sampling — 1.0 is too expensive in production
+management:
+  tracing:
+    sampling:
+      probability: 0.1
+
+# Disable Swagger in production — API docs must never be public
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.edumanage: INFO
