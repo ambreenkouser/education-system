@@ -26,6 +26,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
+    private final LoginAttemptService loginAttemptService;
 
     private static final String USER_CREATED_TOPIC = "user.created";
     private static final long REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -33,7 +34,8 @@ public class AuthService {
     @Transactional
     public LoginResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already registered: " + request.getEmail());
+            // Generic message — do not reveal whether email is registered
+            throw new IllegalArgumentException("Registration failed. Please check your details and try again.");
         }
 
         User user = User.builder()
@@ -58,23 +60,38 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+        String email = request.getEmail();
+
+        if (loginAttemptService.isBlocked(email)) {
+            throw new BadCredentialsException("Account temporarily locked due to too many failed attempts. Try again later.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    loginAttemptService.recordFailure(email);
+                    return new BadCredentialsException("Invalid email or password");
+                });
 
         if (!user.isEnabled()) {
             throw new BadCredentialsException("Account is disabled");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            loginAttemptService.recordFailure(email);
             throw new BadCredentialsException("Invalid email or password");
         }
 
+        loginAttemptService.clearAttempts(email);
         return buildLoginResponse(user);
     }
 
     @Transactional
-    public void logout(String userId) {
+    public void logout(String userId, String accessToken) {
         refreshTokenRepository.deleteAllByUserId(java.util.UUID.fromString(userId));
+        // Blacklist the access token in Redis so the gateway rejects it immediately
+        if (accessToken != null && !accessToken.isBlank()) {
+            jwtService.revokeToken(accessToken);
+        }
     }
 
     private LoginResponse buildLoginResponse(User user) {

@@ -34,9 +34,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Logout and invalidate refresh token")
-    public ResponseEntity<Void> logout(@RequestHeader("X-User-Id") String userId) {
-        authService.logout(userId);
+    @Operation(summary = "Logout — invalidates refresh token and blacklists the access token")
+    public ResponseEntity<Void> logout(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String accessToken = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7)
+                : null;
+        authService.logout(userId, accessToken);
         return ResponseEntity.noContent().build();
     }
 }

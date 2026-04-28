@@ -32,7 +32,10 @@ public class AttendanceService {
     private static final String ATTENDANCE_MARKED_TOPIC = "attendance.marked";
 
     @Transactional
-    @CacheEvict(value = "attendance", key = "#request.courseId + ':' + #request.attendanceDate")
+    @org.springframework.cache.annotation.Caching(evict = {
+        @CacheEvict(value = "attendance",         key = "#request.courseId + ':' + #request.attendanceDate"),
+        @CacheEvict(value = "attendance-summary", key = "#request.studentId + ':' + #request.courseId")
+    })
     public AttendanceResponse mark(AttendanceRequest request, UUID markedBy) {
         attendanceRepository.findByStudentIdAndCourseIdAndAttendanceDate(
                 request.getStudentId(), request.getCourseId(), request.getAttendanceDate())
@@ -78,14 +81,14 @@ public class AttendanceService {
                 .map(attendanceMapper::toResponse).toList();
     }
 
+    @Cacheable(value = "attendance-summary", key = "#studentId + ':' + #courseId")
     public AttendanceSummary getSummary(UUID studentId, UUID courseId) {
-        long total   = attendanceRepository.countByStudentIdAndCourseId(studentId, courseId);
-        long present = attendanceRepository.countByStudentIdAndCourseIdAndStatus(
-                studentId, courseId, AttendanceStatus.PRESENT);
-        long absent  = attendanceRepository.countByStudentIdAndCourseIdAndStatus(
-                studentId, courseId, AttendanceStatus.ABSENT);
-        long late    = attendanceRepository.countByStudentIdAndCourseIdAndStatus(
-                studentId, courseId, AttendanceStatus.LATE);
+        // Single aggregate query replaces 4 separate COUNT round-trips
+        Object[] row = attendanceRepository.countSummary(studentId, courseId);
+        long total   = row[0] != null ? ((Number) row[0]).longValue() : 0L;
+        long present = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        long absent  = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+        long late    = row[3] != null ? ((Number) row[3]).longValue() : 0L;
 
         double percentage = total == 0 ? 0.0 : (double)(present + late) / total * 100.0;
 

@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,11 +83,18 @@ public class FeeService {
                 .remarks(request.getRemarks())
                 .build();
 
-        Payment saved = paymentRepository.save(payment);
+        Payment saved;
+        try {
+            saved = paymentRepository.save(payment);
+        } catch (DataIntegrityViolationException e) {
+            // UNIQUE constraint on transaction_id — idempotent: duplicate submission
+            throw new IllegalStateException(
+                    "Payment already processed for transactionId: " + request.getTransactionId(), e);
+        }
         invoice.setStatus(InvoiceStatus.PAID);
         invoiceRepository.save(invoice);
 
-        // Outbox: persist event atomically with payment
+        // Outbox: persist event atomically with payment in the same transaction
         persistOutboxEvent(saved, invoice);
 
         log.info("Payment processed: invoiceId={}, amount={}", invoice.getId(), request.getPaidAmount());
@@ -103,14 +111,13 @@ public class FeeService {
                 .map(feeMapper::toInvoiceResponse).toList();
     }
 
-    // Mark overdue invoices every day at midnight
-    @Scheduled(cron = "0 0 0 * * *")
+    // Run every 6 hours — distributes load, avoids single midnight heap spike
+    @Scheduled(cron = "0 0 0/6 * * *")
     @Transactional
     public void markOverdueInvoices() {
-        List<Invoice> overdue = invoiceRepository.findOverdue(LocalDate.now());
-        overdue.forEach(inv -> inv.setStatus(InvoiceStatus.OVERDUE));
-        invoiceRepository.saveAll(overdue);
-        log.info("Marked {} invoices as OVERDUE", overdue.size());
+        // Single bulk UPDATE — no rows loaded into JVM heap
+        int updated = invoiceRepository.bulkMarkOverdue(LocalDate.now());
+        log.info("Marked {} invoices as OVERDUE", updated);
     }
 
     private void persistOutboxEvent(Payment payment, Invoice invoice) {

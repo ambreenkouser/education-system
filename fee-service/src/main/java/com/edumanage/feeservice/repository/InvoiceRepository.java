@@ -3,6 +3,7 @@ package com.edumanage.feeservice.repository;
 import com.edumanage.feeservice.model.Invoice;
 import com.edumanage.feeservice.model.InvoiceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
@@ -14,6 +15,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     List<Invoice> findByStudentIdAndStatus(UUID studentId, InvoiceStatus status);
     List<Invoice> findByStatus(InvoiceStatus status);
 
-    @Query("SELECT i FROM Invoice i WHERE i.dueDate < :today AND i.status = 'PENDING'")
-    List<Invoice> findOverdue(LocalDate today);
+    /** Single bulk UPDATE — replaces the JPA loop that loaded all rows into heap */
+    @Modifying
+    @Query("UPDATE Invoice i SET i.status = 'OVERDUE', i.updatedAt = CURRENT_TIMESTAMP " +
+           "WHERE i.status = 'PENDING' AND i.dueDate < :today")
+    int bulkMarkOverdue(LocalDate today);
 }

@@ -103,19 +103,24 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 2
+          max-wait: 1000ms
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          public-key-location: classpath:keys/public.pem
+  # No public-key-location — gateway validates HS256 tokens using the shared secret below
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -126,16 +131,29 @@ management:
         include: health,info,prometheus,gateway
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${TRACING_PROBABILITY:1.0}
   zipkin:
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+jwt:
+  secret: ${JWT_SECRET:edumanage-super-secret-jwt-key-must-be-at-least-256-bits-long-for-security}
 
 resilience4j:
   circuitbreaker:
     configs:
       default:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 10s
-        permitted-number-of-calls-in-half-open-state: 5
+        # Larger window prevents hair-trigger opens on short traffic spikes
+        sliding-window-size: 100
+        sliding-window-type: COUNT_BASED
+        # Open only when 80% of calls fail (not 50%)
+        failure-rate-threshold: 80
+        # Also open when 60% of calls are slow (>2s)
+        slow-call-rate-threshold: 60
+        slow-call-duration-threshold: 2s
+        # Recover faster: 5s open state, then probe with 10 calls
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 10
+        # Need at least 20 calls before evaluating failure rate
+        minimum-number-of-calls: 20
+        automatic-transition-from-open-to-half-open-enabled: true

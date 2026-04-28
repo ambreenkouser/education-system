@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import feign.FeignException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,7 +60,15 @@ public class EnrollmentService {
         Enrollment saved = enrollmentRepository.save(enrollment);
 
         // Saga step 3: Increment course counter (sync Feign call)
-        courseServiceClient.incrementEnrollment(courseId);
+        // Compensating transaction: if this fails, delete the local enrollment to stay consistent
+        try {
+            courseServiceClient.incrementEnrollment(courseId);
+        } catch (FeignException e) {
+            log.error("Failed to increment enrollment counter for courseId={}, rolling back enrollment id={}",
+                    courseId, saved.getId(), e);
+            enrollmentRepository.delete(saved);
+            throw new IllegalStateException("Enrollment failed: could not update course capacity. Please try again.", e);
+        }
 
         // Saga step 4: Publish domain event — fee-service & notification-service react async
         StudentEnrolledEvent event = StudentEnrolledEvent.builder()

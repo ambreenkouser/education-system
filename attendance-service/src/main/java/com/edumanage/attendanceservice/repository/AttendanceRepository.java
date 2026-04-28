@@ -17,11 +17,17 @@ public interface AttendanceRepository extends JpaRepository<AttendanceRecord, UU
     Optional<AttendanceRecord> findByStudentIdAndCourseIdAndAttendanceDate(
             UUID studentId, UUID courseId, LocalDate date);
 
-    @Query("SELECT COUNT(a) FROM AttendanceRecord a " +
-           "WHERE a.studentId = :studentId AND a.courseId = :courseId AND a.status = :status")
-    long countByStudentIdAndCourseIdAndStatus(UUID studentId, UUID courseId, AttendanceStatus status);
-
-    @Query("SELECT COUNT(a) FROM AttendanceRecord a " +
-           "WHERE a.studentId = :studentId AND a.courseId = :courseId")
-    long countByStudentIdAndCourseId(UUID studentId, UUID courseId);
+    /**
+     * Single-query aggregate replacing 4 separate COUNT calls.
+     * Returns [total, present, absent, late] in one DB round-trip.
+     */
+    @Query("""
+           SELECT COUNT(a),
+                  SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN a.status = 'ABSENT'  THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN a.status = 'LATE'    THEN 1 ELSE 0 END)
+           FROM AttendanceRecord a
+           WHERE a.studentId = :studentId AND a.courseId = :courseId
+           """)
+    Object[] countSummary(UUID studentId, UUID courseId);
 }
